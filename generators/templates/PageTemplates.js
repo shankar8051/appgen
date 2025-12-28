@@ -706,6 +706,16 @@ export default ProfilePage`;
   generateAppRoutes() {
     const pages = this.config.getPages();
     
+    // Landing pages (public - no authentication required)
+    // नोट: '404' को सट्टा 'notFound' प्रयोग गर्ने
+    const landingPages = [
+      { page_id: 'home', route: '/', isPublic: true },
+      { page_id: 'about', route: '/about', isPublic: true },
+      { page_id: 'contact', route: '/contact', isPublic: true },
+      { page_id: 'services', route: '/services', isPublic: true },
+      { page_id: 'notFound', route: '*', isPublic: true } // 404 page - नाम परिवर्तन गरिएको
+    ];
+    
     // Predefined pages हरू
     const predefinedPages = [
       { page_id: 'dashboard', route: '/dashboard', permissions: 'dashboard.view' },
@@ -717,32 +727,50 @@ export default ProfilePage`;
     const excelPages = pages || [];
     
     // Unique pages merge गर्ने
-    const allPages = [...predefinedPages];
+    const allPages = [...landingPages];
     
     // Excel pages थप्ने
     excelPages.forEach(excelPage => {
       const exists = allPages.some(p => p.page_id === excelPage.page_id);
       if (!exists) {
-        allPages.push(excelPage);
+        allPages.push({...excelPage, isPublic: false});
+      }
+    });
+    
+    // Predefined pages थप्ने
+    predefinedPages.forEach(predefinedPage => {
+      const exists = allPages.some(p => p.page_id === predefinedPage.page_id);
+      if (!exists) {
+        allPages.push({...predefinedPage, isPublic: false});
       }
     });
     
     // Import statements generate गर्ने
-    const pageImports = allPages.map(p => 
-      `const ${p.page_id.charAt(0).toUpperCase() + p.page_id.slice(1)}Page = lazy(() => import('@/pages/${p.page_id}'))`
-    ).join('\n');
+    const pageImports = allPages.map(p => {
+      if (p.isPublic) {
+        return `const ${p.page_id.charAt(0).toUpperCase() + p.page_id.slice(1)}Page = lazy(() => import('@/pages/landing/${p.page_id}'))`;
+      } else {
+        return `const ${p.page_id.charAt(0).toUpperCase() + p.page_id.slice(1)}Page = lazy(() => import('@/pages/${p.page_id}'))`;
+      }
+    }).join('\n');
 
     // Routes generate गर्ने
-    const pageRoutes = allPages.map(p => 
-      `            <Route 
+    const pageRoutes = allPages.map(p => {
+      if (p.isPublic) {
+        return `            <Route path="${p.route}" element={<${p.page_id.charAt(0).toUpperCase() + p.page_id.slice(1)}Page />} />`;
+      } else if (p.page_id === 'notFound') {
+        return `            <Route path="*" element={<${p.page_id.charAt(0).toUpperCase() + p.page_id.slice(1)}Page />} />`;
+      } else {
+        return `            <Route 
               path="${p.route}" 
               element={
                 <ProtectedRoute requiredPermissions={${p.permissions ? `['${p.permissions}']` : '[]'}}>
                   <${p.page_id.charAt(0).toUpperCase() + p.page_id.slice(1)}Page />
                 </ProtectedRoute>
               } 
-            />`
-    ).join('\n');
+            />`;
+      }
+    }).join('\n');
 
     return `import React, { Suspense, lazy, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -765,19 +793,38 @@ function App() {
     <BrowserRouter>
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">लोडिङ...</div>}>
         <Routes>
+          {/* Public Landing Pages */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/services" element={<ServicesPage />} />
+          
+          {/* Auth Pages */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           
+          {/* Protected Dashboard Pages */}
           <Route element={
             <ProtectedRoute>
               <Layout />
             </ProtectedRoute>
           }>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-${pageRoutes}
+            <Route path="/dashboard" element={
+              <ProtectedRoute requiredPermissions={['dashboard.view']}>
+                <DashboardPage />
+              </ProtectedRoute>
+            } />
+${pageRoutes.split('\n').filter(route => 
+  !route.includes('"/"') && 
+  !route.includes('"/about"') && 
+  !route.includes('"/contact"') && 
+  !route.includes('"/services"') &&
+  !route.includes('"*"')
+).join('\n')}
           </Route>
           
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* 404 Page - Catch all */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
       <Toaster position="top-right" />

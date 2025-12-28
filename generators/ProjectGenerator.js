@@ -32,6 +32,7 @@ class ProjectGenerator {
     this.generateLayout();
     this.generateComponents();
     this.generateAuthPages();
+    this.generateLandingPages();
     this.generateAppPages();
     this.generateAppRoutes();
     this.generateEnvFile();
@@ -149,11 +150,56 @@ class ProjectGenerator {
     fs.writeFileSync(path.join(authDir, 'Register.tsx'), registerPage);
   }
 
+  // ================================================
+  // LANDING PAGES GENERATION
+  // ================================================
+  generateLandingPages() {
+    const pagesDir = path.join(this.projectDir, 'src/pages');
+    const landingPagesDir = path.join(pagesDir, 'landing');
+    fs.ensureDirSync(landingPagesDir);
+    
+    // Home page
+    const homePage = this.fileGenerator.generateLandingHomePage();
+    const homeDir = path.join(landingPagesDir, 'home');
+    fs.ensureDirSync(homeDir);
+    fs.writeFileSync(path.join(homeDir, 'index.jsx'), homePage);
+    console.log('✓ Landing page generated: home');
+    
+    // About page
+    const aboutPage = this.fileGenerator.generateLandingAboutPage();
+    const aboutDir = path.join(landingPagesDir, 'about');
+    fs.ensureDirSync(aboutDir);
+    fs.writeFileSync(path.join(aboutDir, 'index.jsx'), aboutPage);
+    console.log('✓ Landing page generated: about');
+    
+    // Contact page
+    const contactPage = this.fileGenerator.generateLandingContactPage();
+    const contactDir = path.join(landingPagesDir, 'contact');
+    fs.ensureDirSync(contactDir);
+    fs.writeFileSync(path.join(contactDir, 'index.jsx'), contactPage);
+    console.log('✓ Landing page generated: contact');
+    
+    // Services page
+    const servicesPage = this.fileGenerator.generateLandingServicesPage();
+    const servicesDir = path.join(landingPagesDir, 'services');
+    fs.ensureDirSync(servicesDir);
+    fs.writeFileSync(path.join(servicesDir, 'index.jsx'), servicesPage);
+    console.log('✓ Landing page generated: services');
+    
+    // 404 page (notFound नामले)
+    const notFoundPage = this.fileGenerator.generateLanding404Page();
+    const notFoundDir = path.join(landingPagesDir, 'notFound'); // नाम बदलिएको: 404 -> notFound
+    fs.ensureDirSync(notFoundDir);
+    fs.writeFileSync(path.join(notFoundDir, 'index.jsx'), notFoundPage);
+    console.log('✓ Landing page generated: notFound (404)');
+  }
+
   generateAppPages() {
     const pages = this.excelConfig.getPages();
     const pagesDir = path.join(this.projectDir, 'src/pages');
     fs.ensureDirSync(pagesDir);
     
+    // Generate dynamic pages from Excel
     pages.forEach(page => {
       if (page.page_id === 'dashboard' || page.page_id === 'settings' || page.page_id === 'profile') {
         return;
@@ -161,8 +207,10 @@ class ProjectGenerator {
       
       const pageCode = this.fileGenerator.generateDynamicPage(page);
       fs.writeFileSync(path.join(pagesDir, `${page.page_id}.tsx`), pageCode);
+      console.log(`✓ App page generated: ${page.page_id}`);
     });
 
+    // Generate predefined pages
     this.generateDashboardPage();
     this.generateSettingsPage();
     this.generateProfilePage();
@@ -171,26 +219,31 @@ class ProjectGenerator {
   generateDashboardPage() {
     const dashboardCode = this.fileGenerator.generateDashboardPage();
     fs.writeFileSync(path.join(this.projectDir, 'src/pages/dashboard.tsx'), dashboardCode);
+    console.log('✓ Dashboard page generated');
   }
 
   generateSettingsPage() {
     const settingsCode = this.fileGenerator.generateSettingsPage();
     fs.writeFileSync(path.join(this.projectDir, 'src/pages/settings.tsx'), settingsCode);
+    console.log('✓ Settings page generated');
   }
 
   generateProfilePage() {
     const profileCode = this.fileGenerator.generateProfilePage();
     fs.writeFileSync(path.join(this.projectDir, 'src/pages/profile.tsx'), profileCode);
+    console.log('✓ Profile page generated');
   }
 
   generateAppRoutes() {
     const appCode = this.fileGenerator.generateAppRoutes();
     fs.writeFileSync(path.join(this.projectDir, 'src/App.tsx'), appCode);
+    console.log('✓ App routes generated');
   }
 
   generateEnvFile() {
     const envContent = this.fileGenerator.generateEnvFile();
     fs.writeFileSync(path.join(this.projectDir, '.env'), envContent);
+    console.log('✓ Environment file generated');
   }
 }
 

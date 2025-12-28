@@ -9,6 +9,7 @@ const HookTemplates = require('./templates/HookTemplates');
 const LayoutTemplates = require('./templates/LayoutTemplates');
 const ComponentTemplates = require('./templates/ComponentTemplates');
 const PageTemplates = require('./templates/PageTemplates');
+const LandingPageTemplates = require('./templates/LandingPageTemplates'); // नयाँ
 
 class FileGenerator {
   constructor(excelConfig) {
@@ -20,6 +21,7 @@ class FileGenerator {
     this.layoutTemplates = new LayoutTemplates(excelConfig);
     this.componentTemplates = new ComponentTemplates(excelConfig);
     this.pageTemplates = new PageTemplates(excelConfig);
+    this.landingPageTemplates = new LandingPageTemplates(excelConfig); // नयाँ
   }
 
   generateViteConfig() {
@@ -108,6 +110,41 @@ class FileGenerator {
 
   generateEnvFile() {
     return this.configTemplates.generateEnvFile();
+  }
+
+  // ================================================
+  // LANDING PAGES - नयाँ methods
+  // ================================================
+
+  generateLandingHomePage() {
+    return this.landingPageTemplates.generateLandingHomePage();
+  }
+
+  generateLandingAboutPage() {
+    return this.landingPageTemplates.generateLandingAboutPage();
+  }
+
+  generateLandingContactPage() {
+    return this.landingPageTemplates.generateLandingContactPage();
+  }
+
+  generateLanding404Page() {
+    return this.landingPageTemplates.generateLanding404Page();
+  }
+
+  generateLandingServicesPage() {
+    return this.landingPageTemplates.generateLandingServicesPage();
+  }
+
+  // Landing pages को list generate गर्ने
+  generateAllLandingPages() {
+    return {
+      home: this.generateLandingHomePage(),
+      about: this.generateLandingAboutPage(),
+      contact: this.generateLandingContactPage(),
+      services: this.generateLandingServicesPage(),
+      notFound: this.generateLanding404Page()
+    };
   }
 }
 
